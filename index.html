@@ -166,7 +166,7 @@ body.view-ind{max-width:1040px}
 <div class="panel vm" id="imp" style="margin-top:20px"><h3>Importar unidades (Wialon / CSV)</h3><p class="hint">Cada fila: Departamento, NIC, Unidades. Se actualizan por nombre o NIC; si no existe, se agrega.</p><label class="add imp">Importar archivo CSV<input type="file" id="csv" accept=".csv,.tsv,.txt,text/csv,text/plain" hidden></label><textarea id="paste" rows="3" placeholder="O pega aquí la tabla. Ej: Comercial;111;48"></textarea><button class="add" id="apply">Aplicar datos pegados</button><div id="imsg"></div></div>
 <section class="dash vm"><h2>Panel mensual</h2>
 <div class="kpis" id="kpis"></div>
-<div class="panel" id="cierre"></div><div class="panel"><h3>Monto por mes (USD) · toca una barra</h3><div id="chart"></div><div class="legend" id="legend"></div></div>
+<div class="panel" id="cierre"></div><div class="panel" id="mesel"></div>
 <div class="panel"><h3>Unidades por mes · editable</h3><div class="scroll" id="mtable"></div></div>
 <div class="panel"><h3>Respaldo y exportación</h3><div class="share"><button class="sbtn" id="xcsv">Exportar a Excel (CSV)</button><button class="sbtn" id="xpdf">Descargar PDF</button><button class="sbtn" id="xbk">Guardar respaldo</button><label class="sbtn" id="xrs">Restaurar respaldo<input type="file" id="rsf" accept=".json,application/json" hidden></label></div><div id="bmsg"></div></div>
 <div class="panel"><h3>Estado de cuenta por departamento</h3><p class="hint">Elige departamento y mes. El PDF incluye el detalle de todo el año con las tarifas de cada mes.</p><select id="sdep" style="width:100%;font:inherit;color:var(--fg);background:var(--card);border:1px solid var(--line);border-radius:8px;padding:10px;margin-bottom:8px"></select><select id="smes" style="width:100%;font:inherit;color:var(--fg);background:var(--card);border:1px solid var(--line);border-radius:8px;padding:10px"></select><button class="add" id="xst">Descargar estado de cuenta (PDF)</button></div>
@@ -225,16 +225,9 @@ document.getElementById("kpis").innerHTML=
 '<div class="kpi hero"><small>Monto de '+MES[sel]+'</small><b>'+fmt(tm[sel])+'</b><span>'+mt(sel)+' unidades'+(sel>0&&tm[sel-1]?' · '+(tm[sel]>=tm[sel-1]?'▲ ':'▼ ')+Math.abs(Math.round((tm[sel]/tm[sel-1]-1)*1000)/10)+'% vs '+MES[sel-1]:'')+'</span></div>'+
 '<div class="kpi"><small>Total anual</small><b>'+fmt(a)+'</b></div>'+
 '<div class="kpi"><small>Promedio mensual</small><b>'+fmt(a/12)+'</b></div>';
-var mx=Math.max.apply(null,tm.concat([1]))*1.1,L=40,T=10,ph=204,bw=356/12,s='<svg viewBox="0 0 400 240" width="100%" role="img" aria-label="Monto por mes">',g;
-for(g=0;g<=4;g++){var y=T+ph-ph*g/4;s+='<line x1="'+L+'" x2="398" y1="'+y+'" y2="'+y+'" style="stroke:var(--line)" stroke-width="1"/><text x="'+(L-4)+'" y="'+(y+3)+'" text-anchor="end" font-size="9" style="fill:var(--mute)">'+sh(mx*g/4)+'</text>'}
-for(i=0;i<12;i++){var yb=T+ph,x=L+i*bw+bw*0.15;
-s+='<g data-i="'+i+'" style="cursor:pointer" opacity="'+(i===sel?1:0.55)+'"><rect x="'+(L+i*bw)+'" y="'+T+'" width="'+bw+'" height="'+(ph+16)+'" fill="transparent"/>';
-state.depts.forEach(function(d,k){var h=ph*(mu(d,i)*state.rate)/mx;yb-=h;s+='<rect x="'+x+'" y="'+yb+'" width="'+(bw*0.7)+'" height="'+h+'" fill="'+COL[k%6]+'" rx="2"/>'});
-s+='<text x="'+(L+i*bw+bw/2)+'" y="232" text-anchor="middle" font-size="10" font-weight="'+(i===sel?700:400)+'" style="fill:var(--fg)">'+MES[i]+'</text></g>'}
-document.getElementById("chart").innerHTML=s+'</svg>';
-document.querySelectorAll("#chart g[data-i]").forEach(function(e){e.onclick=function(){sel=+e.getAttribute("data-i");dash(false)}});
+var me=document.getElementById("mesel");me.innerHTML='<h3>Mes</h3><div class="cal-g">'+MES.map(function(m,k){return '<button data-k="'+k+'" aria-pressed="'+(k===sel)+'" class="'+(k===sel?'on':'')+'">'+m+(cl(k)?' <span class="lk">🔒</span>':'')+'</button>'}).join("")+'</div>';
+me.querySelectorAll("button").forEach(function(e){e.onclick=function(){sel=+e.getAttribute("data-k");dash(false)}});
 if(full){
-document.getElementById("legend").innerHTML=state.depts.map(function(d,k){return '<span><i style="background:'+COL[k%6]+'"></i>'+esc(d.n)+'</span>'}).join("");
 var h='<table><tr><th>Depto</th>'+MES.map(function(m,k){return '<th>'+m+(cl(k)?' 🔒':'')+'</th>'}).join("")+'</tr>';
 state.depts.forEach(function(d,di){h+='<tr><td>'+esc(d.n)+'</td>';for(i=0;i<12;i++)h+='<td><input type="number" min="0" inputmode="numeric" data-d="'+di+'" data-m="'+i+'" value="'+mu(d,i)+'"'+(cl(i)?' disabled':'')+'></td>';h+='</tr>'});
 h+='<tr class="tot"><td>Unidades</td>';for(i=0;i<12;i++)h+='<td class="tu'+i+'"></td>';
@@ -334,8 +327,7 @@ var rk='<table class="rk"><tr><th>Departamento</th><th>Unidades</th><th>Monto US
 document.getElementById("igen").innerHTML=
 '<div class="panel"><h3>Monto por mes (USD) · toca un punto</h3>'+areaChart(tm)+'</div>'+
 '<div class="tiles">'+tile("Unidades de "+MES[sel],mt(sel),spark(um,"#1b8a8f"))+tile("Valor por unidad",fmt(rt(sel)))+tile("Total anual",fmt(a),spark(tm,"#2f5fb3"))+tile("Promedio mensual",fmt(a/12),spark(tm,"#6b4fa0"))+tile(sel>0?"Variación vs "+MES[sel-1]:"Variación",vr)+tile("Departamentos",D.length)+'</div>'+
-'<div class="igrid"><div class="panel"><h3>Monto por departamento</h3>'+pie(amts,names)+'</div><div class="panel"><h3>Unidades por departamento</h3>'+pie(unis,names)+'</div></div>'+
-'<div class="panel" style="margin-top:14px"><h3>Ranking de departamentos · '+MESL[sel]+'</h3><div class="scroll">'+rk+'</div></div>'+
+'<div class="igrid" style="margin-bottom:14px"><div class="panel"><h3>Monto por departamento</h3>'+pie(amts,names)+'</div><div class="panel"><h3>Ranking de departamentos · '+MESL[sel]+'</h3><div class="scroll">'+rk+'</div></div></div>'+
 '<div class="tiles">'+tile("Metas cumplidas",gt?gd+" de "+gt:"Sin metas")+tile("Meses cerrados",cc+" de 12")+'</div>';
 document.querySelectorAll("#igen rect[data-i]").forEach(function(e){e.onclick=function(){sel=+e.getAttribute("data-i");dash(false)}})}
 function setView(v){var on=v==="ind",a=document.getElementById("tm"),b=document.getElementById("ti");
