@@ -3,7 +3,6 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<link rel="manifest" href="manifest.webmanifest"><meta name="theme-color" content="#13294f"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Dep Mardom"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><link rel="apple-touch-icon" href="apple-touch-icon.png"><link rel="icon" type="image/png" href="icon-192.png">
 <title>Dep Mardom</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
@@ -129,7 +128,6 @@ body.ro .add,body.ro .del,body.ro #apply,body.ro #imp,body.ro #cerrar,body.ro #r
 body.ro input:disabled{opacity:1;color:var(--fg);-webkit-text-fill-color:var(--fg);cursor:default}
 .rolabel{display:none;margin:-10px 0 14px;font-size:13px;font-weight:600;color:var(--accent)}
 body.ro .rolabel{display:block}
-#inst{display:none}
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
@@ -151,7 +149,6 @@ body.ro .rolabel{display:block}
 <div class="panel"><h3>Respaldo y exportación</h3><div class="share"><button class="sbtn" id="xcsv">Exportar a Excel (CSV)</button><button class="sbtn" id="xpdf">Descargar PDF</button><button class="sbtn" id="xbk">Guardar respaldo</button><label class="sbtn" id="xrs">Restaurar respaldo<input type="file" id="rsf" accept=".json,application/json" hidden></label></div><div id="bmsg"></div></div>
 <div class="panel"><h3>Estado de cuenta por departamento</h3><p class="hint">Elige departamento y mes. El PDF incluye el detalle de todo el año con las tarifas de cada mes.</p><select id="sdep" style="width:100%;font:inherit;color:var(--fg);background:var(--card);border:1px solid var(--line);border-radius:8px;padding:10px;margin-bottom:8px"></select><select id="smes" style="width:100%;font:inherit;color:var(--fg);background:var(--card);border:1px solid var(--line);border-radius:8px;padding:10px"></select><button class="add" id="xst">Descargar estado de cuenta (PDF)</button></div>
 <div class="panel"><h3>Compartir resumen</h3><div class="share"><a class="sbtn" id="wa" target="_blank" rel="noopener">WhatsApp</a><a class="sbtn" id="gm" target="_blank" rel="noopener">Gmail</a></div></div>
-<div class="panel" id="instp"><h3>Instalar en el teléfono</h3><p class="hint">Android: toca el botón o el menú ⋮ y elige Instalar app. iPhone: en Safari toca Compartir y luego Añadir a pantalla de inicio.</p><button class="add" id="inst">Instalar app</button></div>
 </section>
 <script>
 var KEY="broidis-flota-v1";
@@ -287,13 +284,6 @@ if(on)ind();window.scrollTo(0,0)}
 document.getElementById("tm").onclick=function(){setView("main")};
 document.getElementById("ti").onclick=function(){setView("ind")};
 function roApply(){if(!window.RO)return;document.querySelectorAll(".card input,#rate,#mtable input,#csv,#paste,#rsf").forEach(function(e){e.disabled=true})}
-(function(){var dp=null,box=document.getElementById("inst"),pan=document.getElementById("instp");
-var sa=window.matchMedia&&matchMedia("(display-mode: standalone)").matches||navigator.standalone;
-if(sa&&pan)pan.style.display="none";
-window.addEventListener("beforeinstallprompt",function(e){e.preventDefault();dp=e;if(box)box.style.display="block"});
-if(box)box.onclick=function(){if(!dp)return;dp.prompt();dp.userChoice.then(function(){dp=null;box.style.display="none"})};
-window.addEventListener("appinstalled",function(){if(pan)pan.style.display="none"});
-if("serviceWorker" in navigator)window.addEventListener("load",function(){navigator.serviceWorker.register("sw.js").catch(function(){})})})();
 var DL=null;
 function bm(t){document.getElementById("bmsg").textContent=t}
 function saveFile(name,data){try{var t=/\.csv$/.test(name)?"text/csv;charset=utf-8":/\.json$/.test(name)?"application/json":"application/pdf";var b=data instanceof Blob?data:new Blob([data],{type:t});var a=document.createElement("a");a.href=URL.createObjectURL(b);a.download=name;document.body.appendChild(a);a.click();setTimeout(function(){URL.revokeObjectURL(a.href);a.remove()},500);bm("Archivo descargado.")}catch(e){bm("No se pudo guardar el archivo.")}}
